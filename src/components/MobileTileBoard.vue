@@ -27,7 +27,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["tile-click", "entity-click"]);
+const emit = defineEmits(["entity-click"]);
 
 const themeKeyMap = {
     tileColorA: "--tile-color-a",
@@ -80,9 +80,6 @@ const themeVars = computed(() => {
     return vars;
 });
 
-const onTileClick = (row, col) => {
-    emit("tile-click", { row, col });
-};
 const onEntityClick = (entity) => {
     emit("entity-click", entity);
 };
@@ -114,7 +111,6 @@ const isActive = (entityId) => props.activeEntityId === entityId;
                             type="button"
                             role="gridcell"
                             :aria-label="tile.label"
-                            @click="onTileClick(tile.row, tile.col)"
                         >
                             <span class="tile-label">{{ tile.label }}</span>
                             <div
@@ -125,16 +121,24 @@ const isActive = (entityId) => props.activeEntityId === entityId;
                                     type="button"
                                     class="entity-button"
                                     @click.stop="
-                                        onEntityClick(getEntity(tile.row, tile.col))
+                                        onEntityClick(
+                                            getEntity(tile.row, tile.col),
+                                        )
                                     "
                                 >
                                     <img
-                                        v-if="getEntity(tile.row, tile.col).assetSrc"
+                                        v-if="
+                                            getEntity(tile.row, tile.col)
+                                                .assetSrc
+                                        "
                                         class="entity-asset"
-                                        :src="getEntity(tile.row, tile.col).assetSrc"
+                                        :src="
+                                            getEntity(tile.row, tile.col)
+                                                .assetSrc
+                                        "
                                         :alt="
-                                            getEntity(tile.row, tile.col).name ||
-                                            'animal'
+                                            getEntity(tile.row, tile.col)
+                                                .name || 'animal'
                                         "
                                     />
                                     <span v-else class="entity-emoji">{{
@@ -142,7 +146,10 @@ const isActive = (entityId) => props.activeEntityId === entityId;
                                     }}</span>
                                     <span
                                         v-if="
-                                            !isCompleted(getEntity(tile.row, tile.col).id)
+                                            !isCompleted(
+                                                getEntity(tile.row, tile.col)
+                                                    .id,
+                                            )
                                         "
                                         class="entity-alert"
                                     >
@@ -151,8 +158,9 @@ const isActive = (entityId) => props.activeEntityId === entityId;
                                 </button>
                                 <div
                                     v-if="
-                                        isActive(getEntity(tile.row, tile.col).id) &&
-                                        activeSpeech
+                                        isActive(
+                                            getEntity(tile.row, tile.col).id,
+                                        ) && activeSpeech
                                     "
                                     class="speech-bubble"
                                 >
@@ -297,10 +305,6 @@ const isActive = (entityId) => props.activeEntityId === entityId;
     background: var(--tile-color-b);
 }
 
-.tile:active {
-    filter: brightness(0.92);
-}
-
 .tile-label {
     padding: 1px;
 }
@@ -354,7 +358,7 @@ const isActive = (entityId) => props.activeEntityId === entityId;
 
 .speech-bubble {
     position: absolute;
-    bottom: calc(100% + 2px);
+    top: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
     min-width: 58px;

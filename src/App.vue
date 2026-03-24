@@ -74,7 +74,12 @@ const entitiesByTheme = {
             col: 5,
             phrase: "I can reach the highest leaves easily.",
             question: "Which leaves can the giraffe reach?",
-            choices: ["High leaves", "Only fallen leaves", "Roots", "Ground grass"],
+            choices: [
+                "High leaves",
+                "Only fallen leaves",
+                "Roots",
+                "Ground grass",
+            ],
             correctIndex: 0,
         },
         {
@@ -153,7 +158,12 @@ const entitiesByTheme = {
             col: 3,
             phrase: "The lesson notes are written on the board.",
             question: "Where are lesson notes written?",
-            choices: ["On the board", "On the floor", "On the window", "On shoes"],
+            choices: [
+                "On the board",
+                "On the floor",
+                "On the window",
+                "On shoes",
+            ],
             correctIndex: 0,
         },
         {
@@ -203,7 +213,12 @@ const entitiesByTheme = {
             col: 1,
             phrase: "Keep milk cold in the fridge section.",
             question: "Where should milk be kept?",
-            choices: ["Fridge section", "Bakery shelf", "Toy shelf", "Entrance"],
+            choices: [
+                "Fridge section",
+                "Bakery shelf",
+                "Toy shelf",
+                "Entrance",
+            ],
             correctIndex: 0,
         },
         {
@@ -239,7 +254,12 @@ const entitiesByTheme = {
             col: 5,
             phrase: "Payment is done at the checkout counter.",
             question: "Where do you pay?",
-            choices: ["Checkout counter", "Parking lot", "Storage room", "Stairs"],
+            choices: [
+                "Checkout counter",
+                "Parking lot",
+                "Storage room",
+                "Stairs",
+            ],
             correctIndex: 0,
         },
         {
@@ -311,7 +331,9 @@ const themeLabelMap = {
 const selectedThemeLabel = computed(
     () => themeLabelMap[selectedTheme.value] ?? "Zoo",
 );
-const currentEntities = computed(() => entitiesByTheme[selectedTheme.value] ?? []);
+const currentEntities = computed(
+    () => entitiesByTheme[selectedTheme.value] ?? [],
+);
 const activeEntity = computed(() =>
     currentEntities.value.find((item) => item.id === activeEntityId.value),
 );
@@ -336,19 +358,20 @@ const questionSheetStyle = computed(() => ({
 }));
 
 watchEffect(() => {
-    document.documentElement.style.setProperty("--app-bg", activeTheme.value.appBg);
+    document.documentElement.style.setProperty(
+        "--app-bg",
+        activeTheme.value.appBg,
+    );
     document.documentElement.style.setProperty(
         "--app-text",
         activeTheme.value.appText,
     );
 });
 
-const onTileClick = ({ row, col }) => {
-    console.log("tile-click", { row, col });
-};
-
 const onEntityClick = (entity) => {
-    const clickedEntity = currentEntities.value.find((item) => item.id === entity?.id);
+    const clickedEntity = currentEntities.value.find(
+        (item) => item.id === entity?.id,
+    );
     if (!clickedEntity || completedEntityIds.value.includes(clickedEntity.id)) {
         return;
     }
@@ -421,10 +444,7 @@ const onAnswer = (choiceIndex) => {
 
     answerFeedback.value = "Not correct. Try again.";
     answerStatus.value = "wrong";
-    disabledChoiceIndexes.value = [
-        ...disabledChoiceIndexes.value,
-        choiceIndex,
-    ];
+    disabledChoiceIndexes.value = [...disabledChoiceIndexes.value, choiceIndex];
 };
 
 const closeQuestionSheet = () => {
@@ -485,15 +505,20 @@ onBeforeUnmount(() => {
         :active-entity-id="activeEntityId"
         :active-speech="activeEntity?.phrase || ''"
         :completed-entity-ids="completedEntityIds"
-        @tile-click="onTileClick"
         @entity-click="onEntityClick"
     >
         <template #top>
             <div class="top-controls theme-menu">
                 <span class="theme-label">Theme</span>
-                <button class="theme-trigger" type="button" @click.stop="toggleThemeMenu">
+                <button
+                    class="theme-trigger"
+                    type="button"
+                    @click.stop="toggleThemeMenu"
+                >
                     {{ selectedThemeLabel }}
-                    <span class="theme-caret" :class="{ open: isThemeMenuOpen }">▾</span>
+                    <span class="theme-caret" :class="{ open: isThemeMenuOpen }"
+                        >▾</span
+                    >
                 </button>
                 <Transition name="menu-pop">
                     <div v-if="isThemeMenuOpen" class="theme-options">
@@ -561,7 +586,9 @@ onBeforeUnmount(() => {
                     <p class="sheet-question">"{{ activeEntity.question }}"</p>
                 </div>
             </div>
-            <p v-if="answerFeedback" class="sheet-feedback">{{ answerFeedback }}</p>
+            <p v-if="answerFeedback" class="sheet-feedback">
+                {{ answerFeedback }}
+            </p>
             <div class="sheet-actions">
                 <button
                     v-for="(choice, index) in activeChoices"
@@ -569,7 +596,8 @@ onBeforeUnmount(() => {
                     type="button"
                     class="sheet-btn"
                     :class="{
-                        'sheet-btn-wrong': disabledChoiceIndexes.includes(index),
+                        'sheet-btn-wrong':
+                            disabledChoiceIndexes.includes(index),
                         'sheet-btn-correct':
                             answerStatus === 'correct' &&
                             selectedCorrectIndex === index,
@@ -626,7 +654,9 @@ onBeforeUnmount(() => {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    transition: border-color 120ms ease, background-color 120ms ease;
+    transition:
+        border-color 120ms ease,
+        background-color 120ms ease;
 }
 
 .theme-trigger:hover {
@@ -684,7 +714,9 @@ onBeforeUnmount(() => {
 
 .menu-pop-enter-active,
 .menu-pop-leave-active {
-    transition: opacity 140ms ease, transform 140ms ease;
+    transition:
+        opacity 140ms ease,
+        transform 140ms ease;
 }
 
 .menu-pop-enter-from,
@@ -784,7 +816,10 @@ onBeforeUnmount(() => {
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    transition:
+        transform 120ms ease,
+        box-shadow 120ms ease,
+        filter 120ms ease;
 }
 
 .sheet-btn:hover {
@@ -823,7 +858,9 @@ onBeforeUnmount(() => {
 
 .bottom-sheet-enter-active,
 .bottom-sheet-leave-active {
-    transition: transform 220ms ease, opacity 220ms ease;
+    transition:
+        transform 220ms ease,
+        opacity 220ms ease;
 }
 
 .bottom-sheet-enter-from,
