@@ -418,40 +418,17 @@ const onEntityClick = (entity) => {
     activeSpeechEntityId.value = clickedEntity.id;
     activeSpeechText.value = clickedEntity.phrase;
 
-    if (activeAudio) {
-        activeAudio.pause();
-        activeAudio.currentTime = 0;
-    }
-
-    const audioSrc = `/tts/${encodeURIComponent(clickedEntity.ttsFile || "")}`;
-    const audio = new Audio(audioSrc);
-    activeAudio = audio;
-
-    audio.onended = () => {
-        if (activeAudio !== audio) {
-            return;
-        }
-        activeSpeechEntityId.value = "";
-        activeSpeechText.value = "";
-        showQuestionSheet.value = true;
-    };
-
-    audio.onerror = () => {
-        if (activeAudio !== audio) {
-            return;
-        }
-        activeSpeechEntityId.value = "";
-        activeSpeechText.value = "";
-        showQuestionSheet.value = true;
-    };
-
-    audio.play().catch(() => {
-        if (activeAudio !== audio) {
-            return;
-        }
-        activeSpeechEntityId.value = "";
-        activeSpeechText.value = "";
-        showQuestionSheet.value = true;
+    playEntityAudio(clickedEntity, {
+        onEnded: () => {
+            activeSpeechEntityId.value = "";
+            activeSpeechText.value = "";
+            showQuestionSheet.value = true;
+        },
+        onError: () => {
+            activeSpeechEntityId.value = "";
+            activeSpeechText.value = "";
+            showQuestionSheet.value = true;
+        },
     });
 };
 
@@ -521,6 +498,59 @@ const toggleThemeMenu = () => {
 const chooseTheme = (theme) => {
     selectedTheme.value = theme;
     isThemeMenuOpen.value = false;
+};
+
+const playEntityAudio = (entity, options = {}) => {
+    if (!entity?.ttsFile) {
+        if (typeof options.onError === "function") {
+            options.onError();
+        }
+        return;
+    }
+
+    if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+    }
+
+    const audioSrc = `/tts/${encodeURIComponent(entity.ttsFile)}`;
+    const audio = new Audio(audioSrc);
+    activeAudio = audio;
+
+    audio.onended = () => {
+        if (activeAudio !== audio) {
+            return;
+        }
+        if (typeof options.onEnded === "function") {
+            options.onEnded();
+        }
+    };
+
+    audio.onerror = () => {
+        if (activeAudio !== audio) {
+            return;
+        }
+        if (typeof options.onError === "function") {
+            options.onError();
+        }
+    };
+
+    audio.play().catch(() => {
+        if (activeAudio !== audio) {
+            return;
+        }
+        if (typeof options.onError === "function") {
+            options.onError();
+        }
+    });
+};
+
+const replayActiveEntityAudio = () => {
+    if (!activeEntity.value) {
+        return;
+    }
+
+    playEntityAudio(activeEntity.value);
 };
 
 const handleWindowClick = (event) => {
@@ -634,6 +664,14 @@ onBeforeUnmount(() => {
             :style="questionSheetStyle"
         >
             <div class="sheet-handle" aria-hidden="true"></div>
+            <button
+                type="button"
+                class="sheet-speaker-btn"
+                @click="replayActiveEntityAudio"
+                aria-label="Play voice line"
+            >
+                🔊
+            </button>
             <div class="sheet-prompt">
                 <span class="sheet-emoji">{{ activeEntity.emoji }}</span>
                 <div class="sheet-copy">
@@ -813,6 +851,28 @@ onBeforeUnmount(() => {
     height: 5px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.45);
+}
+
+.sheet-speaker-btn {
+    position: absolute;
+    top: 18px;
+    right: 14px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-size: 17px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sheet-speaker-btn:hover {
+    background: rgba(255, 255, 255, 0.32);
 }
 
 .sheet-prompt {
