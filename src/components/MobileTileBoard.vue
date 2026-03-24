@@ -36,7 +36,6 @@ const emit = defineEmits(["entity-click"]);
 const themeKeyMap = {
     tileColorA: "--tile-color-a",
     tileColorB: "--tile-color-b",
-    tileBorderColor: "--tile-border-color",
     boardBg: "--board-bg",
     zoneTopBg: "--zone-top-bg",
     zoneBottomBg: "--zone-bottom-bg",
@@ -196,7 +195,6 @@ const isActive = (entityId) => {
 .mobile-board {
     --tile-color-a: #87ceeb;
     --tile-color-b: #5ea6d1;
-    --tile-border-color: #2c5e7c;
     --board-bg: #143249;
     --zone-top-bg: #0f2435;
     --zone-bottom-bg: #0f2435;
@@ -287,6 +285,7 @@ const isActive = (entityId) => {
     gap: 0;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-template-rows: repeat(11, minmax(0, 1fr));
+    isolation: isolate;
 }
 
 .tile {
@@ -294,7 +293,9 @@ const isActive = (entityId) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 0;
+    border: 0 !important;
+    outline: 0;
+    box-shadow: none;
     appearance: none;
     border-radius: 0;
     margin: 0;
@@ -302,8 +303,12 @@ const isActive = (entityId) => {
     line-height: 1;
     text-align: center;
     color: var(--tile-label-color);
-    font-size: clamp(6px, 1.7vw, 9px);
+    font-size: clamp(7px, 2.1vw, 11px);
     font-weight: 700;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 .tile-a {
@@ -312,6 +317,25 @@ const isActive = (entityId) => {
 
 .tile-b {
     background: var(--tile-color-b);
+}
+
+.tile::before {
+    content: "";
+    position: absolute;
+    inset: -0.8px;
+    background: inherit;
+    z-index: 0;
+}
+
+.tile > * {
+    position: relative;
+    z-index: 1;
+}
+
+.tile:focus,
+.tile:focus-visible {
+    outline: 0;
+    box-shadow: none;
 }
 
 .tile-label {
@@ -332,19 +356,28 @@ const isActive = (entityId) => {
     background: transparent;
     padding: 0;
     margin: 0;
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: auto;
 }
 
 .entity-emoji {
-    font-size: clamp(16px, 4.2vw, 26px);
+    font-size: clamp(24px, 6.6vw, 40px);
     line-height: 1;
     cursor: pointer;
     pointer-events: auto;
 }
 
 .entity-asset {
-    width: clamp(16px, 4.2vw, 26px);
-    height: clamp(16px, 4.2vw, 26px);
+    width: 70%;
+    height: 70%;
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 34px;
+    max-height: 34px;
     object-fit: contain;
     cursor: pointer;
     pointer-events: auto;
@@ -370,16 +403,40 @@ const isActive = (entityId) => {
     top: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
-    min-width: 58px;
-    max-width: 120px;
-    padding: 5px 6px;
+    min-width: 72px;
+    max-width: 150px;
+    padding: 6px 8px;
     border-radius: 8px;
     background: #ffffff;
     color: #1d1d1d;
-    font-size: 9px;
+    font-size: 10px;
     line-height: 1.2;
     text-align: center;
     z-index: 20;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 430px) {
+    .tile {
+        font-size: clamp(9px, 2.8vw, 13px);
+    }
+
+    .entity-emoji {
+        font-size: clamp(30px, 9vw, 48px);
+    }
+
+    .entity-asset {
+        width: 84%;
+        height: 84%;
+        max-width: 48px;
+        max-height: 48px;
+    }
+
+    .speech-bubble {
+        min-width: 86px;
+        max-width: 180px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
 }
 </style>
