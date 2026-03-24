@@ -24,7 +24,9 @@ const disabledChoiceIndexes = ref([]);
 const selectedCorrectIndex = ref(-1);
 const activeChoices = ref([]);
 const activeCorrectIndex = ref(-1);
-let questionTimer = null;
+const activeSpeechEntityId = ref("");
+const activeSpeechText = ref("");
+let activeAudio = null;
 let closeTimer = null;
 
 const entitiesByTheme = {
@@ -34,6 +36,7 @@ const entitiesByTheme = {
             name: "Lion",
             emoji: "🦁",
             assetSrc: "",
+            ttsFile: "Lion.mp3",
             row: 1,
             col: 1,
             phrase: "I am hungry and want meat for lunch.",
@@ -46,6 +49,7 @@ const entitiesByTheme = {
             name: "Elephant",
             emoji: "🐘",
             assetSrc: "",
+            ttsFile: "Elephant.mp3",
             row: 2,
             col: 4,
             phrase: "I need lots of water after my walk.",
@@ -58,6 +62,7 @@ const entitiesByTheme = {
             name: "Monkey",
             emoji: "🐵",
             assetSrc: "",
+            ttsFile: "Monkey.mp3",
             row: 4,
             col: 2,
             phrase: "I found a banana tree near the river.",
@@ -70,6 +75,7 @@ const entitiesByTheme = {
             name: "Giraffe",
             emoji: "🦒",
             assetSrc: "",
+            ttsFile: "Giraffe.mp3",
             row: 6,
             col: 5,
             phrase: "I can reach the highest leaves easily.",
@@ -87,6 +93,7 @@ const entitiesByTheme = {
             name: "Penguin",
             emoji: "🐧",
             assetSrc: "",
+            ttsFile: "Penguin.mp3",
             row: 8,
             col: 3,
             phrase: "I like cold places and slippery ice.",
@@ -99,6 +106,7 @@ const entitiesByTheme = {
             name: "Zebra",
             emoji: "🦓",
             assetSrc: "",
+            ttsFile: "Zebra.mp3",
             row: 10,
             col: 1,
             phrase: "My black and white stripes help me hide.",
@@ -118,6 +126,7 @@ const entitiesByTheme = {
             name: "Teacher",
             emoji: "👩‍🏫",
             assetSrc: "",
+            ttsFile: "Teacher.mp3",
             row: 1,
             col: 2,
             phrase: "Class starts after the school bell rings.",
@@ -130,6 +139,7 @@ const entitiesByTheme = {
             name: "Student A",
             emoji: "🧑‍🎓",
             assetSrc: "",
+            ttsFile: "Student.mp3",
             row: 3,
             col: 5,
             phrase: "I use a pencil to write in my notebook.",
@@ -142,6 +152,7 @@ const entitiesByTheme = {
             name: "Book",
             emoji: "📘",
             assetSrc: "",
+            ttsFile: "Book.mp3",
             row: 5,
             col: 1,
             phrase: "This book is for reading practice.",
@@ -154,6 +165,7 @@ const entitiesByTheme = {
             name: "Whiteboard",
             emoji: "🧾",
             assetSrc: "",
+            ttsFile: "Whiteboard.mp3",
             row: 6,
             col: 3,
             phrase: "The lesson notes are written on the board.",
@@ -171,6 +183,7 @@ const entitiesByTheme = {
             name: "Student B",
             emoji: "🙋",
             assetSrc: "",
+            ttsFile: "Student B.mp3",
             row: 8,
             col: 4,
             phrase: "I raise my hand when I want to answer.",
@@ -183,6 +196,7 @@ const entitiesByTheme = {
             name: "Class Clock",
             emoji: "🕒",
             assetSrc: "",
+            ttsFile: "Class Clock.mp3",
             row: 10,
             col: 2,
             phrase: "The school clock helps us track class time.",
@@ -197,6 +211,7 @@ const entitiesByTheme = {
             name: "Apple",
             emoji: "🍎",
             assetSrc: "",
+            ttsFile: "Apple.mp3",
             row: 2,
             col: 4,
             phrase: "Fresh apples are in the fruit aisle.",
@@ -209,6 +224,7 @@ const entitiesByTheme = {
             name: "Milk",
             emoji: "🥛",
             assetSrc: "",
+            ttsFile: "Milk.mp3",
             row: 2,
             col: 1,
             phrase: "Keep milk cold in the fridge section.",
@@ -226,6 +242,7 @@ const entitiesByTheme = {
             name: "Bread",
             emoji: "🍞",
             assetSrc: "",
+            ttsFile: "Bread.mp3",
             row: 4,
             col: 4,
             phrase: "Bread is usually found near the bakery.",
@@ -238,6 +255,7 @@ const entitiesByTheme = {
             name: "Shopping Cart",
             emoji: "🛒",
             assetSrc: "",
+            ttsFile: "Shopping Cart.mp3",
             row: 6,
             col: 2,
             phrase: "Use a cart to carry many items.",
@@ -250,6 +268,7 @@ const entitiesByTheme = {
             name: "Cashier",
             emoji: "💳",
             assetSrc: "",
+            ttsFile: "Cashier.mp3",
             row: 8,
             col: 5,
             phrase: "Payment is done at the checkout counter.",
@@ -267,6 +286,7 @@ const entitiesByTheme = {
             name: "Grocery Bag",
             emoji: "🛍️",
             assetSrc: "",
+            ttsFile: "Grocery Bag.mp3",
             row: 10,
             col: 3,
             phrase: "Use a bag to take groceries home.",
@@ -395,16 +415,44 @@ const onEntityClick = (entity) => {
     activeCorrectIndex.value = indexedChoices.findIndex(
         (item) => item.index === clickedEntity.correctIndex,
     );
+    activeSpeechEntityId.value = clickedEntity.id;
+    activeSpeechText.value = clickedEntity.phrase;
 
-    if (questionTimer) {
-        clearTimeout(questionTimer);
+    if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
     }
 
-    questionTimer = setTimeout(() => {
-        if (activeEntityId.value === clickedEntity.id) {
-            showQuestionSheet.value = true;
+    const audioSrc = `/tts/${encodeURIComponent(clickedEntity.ttsFile || "")}`;
+    const audio = new Audio(audioSrc);
+    activeAudio = audio;
+
+    audio.onended = () => {
+        if (activeAudio !== audio) {
+            return;
         }
-    }, 1200);
+        activeSpeechEntityId.value = "";
+        activeSpeechText.value = "";
+        showQuestionSheet.value = true;
+    };
+
+    audio.onerror = () => {
+        if (activeAudio !== audio) {
+            return;
+        }
+        activeSpeechEntityId.value = "";
+        activeSpeechText.value = "";
+        showQuestionSheet.value = true;
+    };
+
+    audio.play().catch(() => {
+        if (activeAudio !== audio) {
+            return;
+        }
+        activeSpeechEntityId.value = "";
+        activeSpeechText.value = "";
+        showQuestionSheet.value = true;
+    });
 };
 
 const onAnswer = (choiceIndex) => {
@@ -455,7 +503,15 @@ const closeQuestionSheet = () => {
     selectedCorrectIndex.value = -1;
     activeChoices.value = [];
     activeCorrectIndex.value = -1;
+    activeSpeechEntityId.value = "";
+    activeSpeechText.value = "";
     activeEntityId.value = "";
+
+    if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+        activeAudio = null;
+    }
 };
 
 const toggleThemeMenu = () => {
@@ -475,9 +531,6 @@ const handleWindowClick = (event) => {
 
 watch(selectedTheme, () => {
     closeQuestionSheet();
-    if (questionTimer) {
-        clearTimeout(questionTimer);
-    }
     if (closeTimer) {
         clearTimeout(closeTimer);
     }
@@ -488,11 +541,12 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-    if (questionTimer) {
-        clearTimeout(questionTimer);
-    }
     if (closeTimer) {
         clearTimeout(closeTimer);
+    }
+    if (activeAudio) {
+        activeAudio.pause();
+        activeAudio = null;
     }
     window.removeEventListener("click", handleWindowClick);
 });
@@ -503,7 +557,8 @@ onBeforeUnmount(() => {
         :theme="boardTheme"
         :entities="currentEntities"
         :active-entity-id="activeEntityId"
-        :active-speech="activeEntity?.phrase || ''"
+        :active-speech="activeSpeechText"
+        :active-speech-entity-id="activeSpeechEntityId"
         :completed-entity-ids="completedEntityIds"
         @entity-click="onEntityClick"
     >

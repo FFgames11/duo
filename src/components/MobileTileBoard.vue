@@ -21,6 +21,10 @@ const props = defineProps({
         type: String,
         default: "",
     },
+    activeSpeechEntityId: {
+        type: String,
+        default: "",
+    },
     completedEntityIds: {
         type: Array,
         default: () => [],
@@ -86,7 +90,12 @@ const onEntityClick = (entity) => {
 
 const getEntity = (row, col) => entityMap.value[`${row}-${col}`];
 const isCompleted = (entityId) => completedSet.value.has(entityId);
-const isActive = (entityId) => props.activeEntityId === entityId;
+const isActive = (entityId) => {
+    if (props.activeSpeechEntityId) {
+        return props.activeSpeechEntityId === entityId;
+    }
+    return props.activeEntityId === entityId;
+};
 </script>
 
 <template>
