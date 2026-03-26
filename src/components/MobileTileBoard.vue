@@ -95,6 +95,32 @@ const isActive = (entityId) => {
     }
     return props.activeEntityId === entityId;
 };
+
+const hasActiveSpeech = (row, col) => {
+    const entity = getEntity(row, col);
+    return Boolean(entity && props.activeSpeech && isActive(entity.id));
+};
+
+const activeSpeechEntity = computed(
+    () =>
+        props.entities.find(
+            (entity) => entity.id === props.activeSpeechEntityId,
+        ) ?? null,
+);
+
+const speechBubbleStyle = computed(() => {
+    if (!activeSpeechEntity.value) {
+        return {};
+    }
+
+    const left = ((activeSpeechEntity.value.col - 0.5) / COLS) * 100;
+    const top = ((activeSpeechEntity.value.row - 1) / ROWS) * 100;
+
+    return {
+        left: `${left}%`,
+        top: `${Math.max(top, 2)}%`,
+    };
+});
 </script>
 
 <template>
@@ -111,12 +137,19 @@ const isActive = (entityId) => {
             <div class="board-surface">
                 <div class="tile-grid" role="grid" aria-label="Tile board">
                     <template v-for="(rowTiles, row) in boardRows" :key="row">
-                        <button
+                        <div
                             v-for="tile in rowTiles"
                             :key="`${tile.row}-${tile.col}`"
                             class="tile"
-                            :class="tile.isA ? 'tile-a' : 'tile-b'"
-                            type="button"
+                            :class="[
+                                tile.isA ? 'tile-a' : 'tile-b',
+                                {
+                                    'tile-active': hasActiveSpeech(
+                                        tile.row,
+                                        tile.col,
+                                    ),
+                                },
+                            ]"
                             role="gridcell"
                             :aria-label="tile.label"
                         >
@@ -164,19 +197,17 @@ const isActive = (entityId) => {
                                         !
                                     </span>
                                 </button>
-                                <div
-                                    v-if="
-                                        isActive(
-                                            getEntity(tile.row, tile.col).id,
-                                        ) && activeSpeech
-                                    "
-                                    class="speech-bubble"
-                                >
-                                    {{ activeSpeech }}
-                                </div>
                             </div>
-                        </button>
+                        </div>
                     </template>
+                </div>
+                <div
+                    v-if="activeSpeechEntity && activeSpeech"
+                    class="speech-overlay"
+                >
+                    <div class="speech-bubble" :style="speechBubbleStyle">
+                        {{ activeSpeech }}
+                    </div>
                 </div>
             </div>
         </main>
@@ -216,7 +247,7 @@ const isActive = (entityId) => {
         "top top top"
         "left board right"
         "bottom bottom bottom";
-    overflow: hidden;
+    overflow: visible;
     touch-action: manipulation;
 }
 
@@ -261,10 +292,12 @@ const isActive = (entityId) => {
     place-items: center;
     padding: var(--board-padding);
     overflow: visible;
+    position: relative;
     z-index: 1;
 }
 
 .board-surface {
+    position: relative;
     display: block;
     line-height: 0;
     width: min(
@@ -285,7 +318,8 @@ const isActive = (entityId) => {
     gap: 0;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     grid-template-rows: repeat(11, minmax(0, 1fr));
-    isolation: isolate;
+    position: relative;
+    overflow: visible;
 }
 
 .tile {
@@ -317,6 +351,10 @@ const isActive = (entityId) => {
 
 .tile-b {
     background: var(--tile-color-b);
+}
+
+.tile-active {
+    z-index: 100;
 }
 
 .tile::before {
@@ -398,22 +436,41 @@ const isActive = (entityId) => {
     font-weight: 800;
 }
 
+.speech-overlay {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 9999;
+}
+
 .speech-bubble {
     position: absolute;
-    top: calc(100% + 2px);
-    left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, calc(-100% - 10px));
     min-width: 72px;
-    max-width: 150px;
-    padding: 6px 8px;
-    border-radius: 8px;
+    max-width: min(150px, calc(100vw - 40px));
+    padding: 7px 9px;
+    border-radius: 10px;
     background: #ffffff;
     color: #1d1d1d;
-    font-size: 10px;
-    line-height: 1.2;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
     text-align: center;
-    z-index: 20;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    z-index: 40;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.speech-bubble::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 7px 6px 0 6px;
+    border-style: solid;
+    border-color: #ffffff transparent transparent transparent;
 }
 
 @media (max-width: 430px) {
@@ -433,10 +490,10 @@ const isActive = (entityId) => {
     }
 
     .speech-bubble {
-        min-width: 86px;
-        max-width: 180px;
+        min-width: 76px;
+        max-width: 156px;
         padding: 8px 10px;
-        font-size: 12px;
+        font-size: 11px;
     }
 }
 </style>

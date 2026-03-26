@@ -28,6 +28,7 @@ const activeSpeechEntityId = ref("");
 const activeSpeechText = ref("");
 let activeAudio = null;
 let closeTimer = null;
+let speechFallbackTimer = null;
 
 const entitiesByTheme = {
     zoo: [
@@ -414,16 +415,24 @@ const onEntityClick = (entity) => {
     activeSpeechEntityId.value = clickedEntity.id;
     activeSpeechText.value = clickedEntity.phrase;
 
+    const finishSpeech = () => {
+        if (activeEntityId.value !== clickedEntity.id) {
+            return;
+        }
+        activeSpeechEntityId.value = "";
+        activeSpeechText.value = "";
+        showQuestionSheet.value = true;
+    };
+
+    if (speechFallbackTimer) {
+        clearTimeout(speechFallbackTimer);
+        speechFallbackTimer = null;
+    }
+
     playEntityAudio(clickedEntity, {
-        onEnded: () => {
-            activeSpeechEntityId.value = "";
-            activeSpeechText.value = "";
-            showQuestionSheet.value = true;
-        },
+        onEnded: finishSpeech,
         onError: () => {
-            activeSpeechEntityId.value = "";
-            activeSpeechText.value = "";
-            showQuestionSheet.value = true;
+            speechFallbackTimer = setTimeout(finishSpeech, 1200);
         },
     });
 };
@@ -479,6 +488,11 @@ const closeQuestionSheet = () => {
     activeSpeechEntityId.value = "";
     activeSpeechText.value = "";
     activeEntityId.value = "";
+
+    if (speechFallbackTimer) {
+        clearTimeout(speechFallbackTimer);
+        speechFallbackTimer = null;
+    }
 
     if (activeAudio) {
         activeAudio.pause();
@@ -573,6 +587,10 @@ onBeforeUnmount(() => {
     if (activeAudio) {
         activeAudio.pause();
         activeAudio = null;
+    }
+    if (speechFallbackTimer) {
+        clearTimeout(speechFallbackTimer);
+        speechFallbackTimer = null;
     }
     window.removeEventListener("click", handleWindowClick);
 });
